@@ -5,10 +5,12 @@ export interface ContactFormData {
   companyName: string;
   companySize: string;
   topic: string;
+  message?: string;
 }
 
 export interface Result {
   label: string;
   confidence: number;
   source: string;
+  image: string;
 }

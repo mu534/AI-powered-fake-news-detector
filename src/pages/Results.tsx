@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { verifyNews } from "../services/api";
 import ResultCard from "../components/ResultCard";
 
@@ -8,67 +8,56 @@ const Results: React.FC = () => {
     label: string;
     confidence: number;
     source: string;
+    image: string;
   }
 
   const [results, setResults] = useState<Result[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const location = useLocation();
   const text = new URLSearchParams(location.search).get("text") || "";
 
   useEffect(() => {
     const fetchResults = async () => {
-      const data = await verifyNews(text);
-      setResults([data]);
+      if (!text) return;
+      setLoading(true);
+      try {
+        const data = await verifyNews(text);
+        setResults([data]);
+      } catch (error) {
+        console.error("Error fetching AI results:", error);
+      } finally {
+        setLoading(false);
+      }
     };
-    if (text) fetchResults();
+    fetchResults();
   }, [text]);
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h2 className="text-2xl font-semibold mb-4">Fake News</h2>
-      <div className="mb-4 space-x-4">
-        <Link to="/signup" className="text-blue-500">
-          Sign Up
-        </Link>
-        <Link to="/contact" className="text-blue-500">
-          Contact Us
-        </Link>
-      </div>
-      <h3 className="text-xl font-medium mb-2">Analysis</h3>
-      {results.length > 0 ? (
-        results.map((result, index) => <ResultCard key={index} {...result} />)
+    <div className="max-w-6xl mx-auto p-6 mb-20 mt-20">
+      <h2 className="text-3xl font-bold text-center mb-6">
+        AI News Verification Results
+      </h2>
+
+      {loading ? (
+        <div className="flex flex-col items-center justify-center">
+          <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
+          <p className="text-lg text-gray-600">
+            Analyzing news... Please wait.
+          </p>
+        </div>
       ) : (
-        <>
-          <ResultCard
-            label="Fraud Detected"
-            confidence={0.95}
-            source="Transaction Logs"
-          />
-          <ResultCard
-            label="Overbilling"
-            confidence={0.89}
-            source="Invoice Analysis"
-          />
-          <ResultCard label="No Issue" confidence={0.88} source="System Logs" />
-          <ResultCard
-            label="Anomaly Found"
-            confidence={0.9}
-            source="Machine Logs"
-          />
-          <ResultCard
-            label="Data Breach"
-            confidence={0.92}
-            source="Security Scan"
-          />
-          <ResultCard
-            label="System Error"
-            confidence={0.94}
-            source="Error Reports"
-          />
-        </>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {results.length > 0 ? (
+            results.map((result, index) => (
+              <ResultCard key={index} {...result} />
+            ))
+          ) : (
+            <p className="text-center text-lg text-red-500">
+              No results found. Try a different news source.
+            </p>
+          )}
+        </div>
       )}
-      <p className="mt-4">Practice</p>
-      <p>Practice</p>
-      <p className="mt-2">English</p>
     </div>
   );
 };

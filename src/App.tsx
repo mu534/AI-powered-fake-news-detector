@@ -7,6 +7,7 @@ import Verify from "./pages/Verify";
 import Results from "./pages/Results";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import VerificationGuide from "./pages/VerificationGuide";
 
 const App: React.FC = () => {
   return (
@@ -18,6 +19,7 @@ const App: React.FC = () => {
             <Route path="/" element={<Home />} />
             <Route path="/verify" element={<Verify />} />
             <Route path="/results" element={<Results />} />
+            <Route path="/VerificationGuide" element={<VerificationGuide />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/signup" element={<div>Sign Up Page (TBD)</div>} />

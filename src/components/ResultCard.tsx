@@ -4,15 +4,24 @@ const ResultCard: React.FC<{
   label: string;
   confidence: number;
   source: string;
-}> = ({ label, confidence, source }) => {
+  image: string;
+}> = ({ label, confidence, source, image }) => {
   return (
-    <div className="p-4 bg-gray-100 rounded mb-4">
-      <p className="font-semibold">{label}</p>
-      <p>Confidence Score: {(confidence * 100).toFixed(0)}%</p>
-      <p>Source: {source}</p>
-      <a href="#" className="text-blue-500">
-        View Details
-      </a>
+    <div className="bg-white shadow-lg rounded-xl overflow-hidden">
+      <img src={image} alt={label} className="w-full h-40 object-cover" />
+      <div className="p-4">
+        <h3 className="text-lg font-bold mb-1">{label}</h3>
+        <p className="text-sm text-gray-600 mb-2">
+          Confidence Score: {(confidence * 100).toFixed(0)}%
+        </p>
+        <p className="text-sm text-gray-500">Source: {source}</p>
+        <a
+          href="#"
+          className="block mt-3 text-blue-600 font-semibold hover:underline"
+        >
+          View Details
+        </a>
+      </div>
     </div>
   );
 };
