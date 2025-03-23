@@ -1,11 +1,21 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, token, setToken, setUser } = useAuth();
+  const navigate = useNavigate();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    setUser(null);
+    setIsOpen(false); // Close the menu on mobile
+    navigate("/"); // Redirect to homepage
   };
 
   return (
@@ -90,18 +100,41 @@ const Navbar: React.FC = () => {
             className="block md:inline-block py-2 md:py-0 hover:text-blue-500"
             onClick={() => setIsOpen(false)}
           >
-            Checklist
+            Verification Guide
           </Link>
 
-          {/* Buttons (stacked on mobile, inline on larger screens) */}
+          {/* Auth Links/Buttons (stacked on mobile, inline on larger screens) */}
           <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 mt-4 md:mt-0">
-            <Link
-              to="/signup"
-              className="border border-blue-500 text-blue-500 px-4 py-2 rounded-lg hover:bg-blue-50 text-center"
-              onClick={() => setIsOpen(false)}
-            >
-              Sign Up
-            </Link>
+            {token ? (
+              <>
+                <span className="block md:inline-block py-2 md:py-0 text-gray-800">
+                  {user?.email}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="border border-blue-500 text-blue-500 px-4 py-2 rounded-lg hover:bg-blue-50 text-center"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/signup"
+                  className="border border-blue-500 text-blue-500 px-4 py-2 rounded-lg hover:bg-blue-50 text-center"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Sign Up
+                </Link>
+                <Link
+                  to="/login"
+                  className="border border-blue-500 text-blue-500 px-4 py-2 rounded-lg hover:bg-blue-50 text-center"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Log In
+                </Link>
+              </>
+            )}
             <Link
               to="/contact"
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 text-center"
