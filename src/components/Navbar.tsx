@@ -14,8 +14,8 @@ const Navbar: React.FC = () => {
   const handleLogout = () => {
     setToken(null);
     setUser(null);
-    setIsOpen(false); // Close the menu on mobile
-    navigate("/"); // Redirect to homepage
+    setIsOpen(false);
+    navigate("/");
   };
 
   return (
@@ -102,13 +102,23 @@ const Navbar: React.FC = () => {
           >
             Verification Guide
           </Link>
+          {/* Show Admin link only for users with "admin" role */}
+          {token && user?.role === "admin" && (
+            <Link
+              to="/admin"
+              className="block md:inline-block py-2 md:py-0 hover:text-blue-500"
+              onClick={() => setIsOpen(false)}
+            >
+              Admin
+            </Link>
+          )}
 
-          {/* Auth Links/Buttons (stacked on mobile, inline on larger screens) */}
+          {/* Auth Links/Buttons */}
           <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 mt-4 md:mt-0">
             {token ? (
               <>
                 <span className="block md:inline-block py-2 md:py-0 text-gray-800">
-                  {user?.email}
+                  {user?.email} ({user?.role})
                 </span>
                 <button
                   onClick={handleLogout}

@@ -12,19 +12,30 @@ const Results: React.FC = () => {
   }
 
   const [results, setResults] = useState<Result[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const location = useLocation();
   const text = new URLSearchParams(location.search).get("text") || "";
 
   useEffect(() => {
     const fetchResults = async () => {
-      if (!text) return;
+      if (!text) {
+        setError("No text provided for verification.");
+        setLoading(false);
+        return;
+      }
       setLoading(true);
+      setError(null);
       try {
         const data = await verifyNews(text);
         setResults([data]);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error fetching AI results:", error);
+        setError(
+          error instanceof Error
+            ? error.message
+            : "An error occurred while fetching results."
+        );
       } finally {
         setLoading(false);
       }
@@ -43,6 +54,31 @@ const Results: React.FC = () => {
           <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
           <p className="text-lg text-gray-600">
             Analyzing news... Please wait.
+          </p>
+        </div>
+      ) : error ? (
+        <div className="text-center text-lg text-red-500">
+          <p>{error}</p>
+          <p className="mt-2">
+            Try searching on{" "}
+            <a
+              href="https://www.snopes.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Snopes
+            </a>{" "}
+            or{" "}
+            <a
+              href="https://www.factcheck.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              FactCheck.org
+            </a>
+            .
           </p>
         </div>
       ) : (

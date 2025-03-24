@@ -1,64 +1,112 @@
 import React, { useState, FormEvent } from "react";
-import axios, { AxiosError } from "axios";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 
 const SignUp: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [message, setMessage] = useState<string>("");
-  const { setToken, setUser } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
+    setLoading(true);
+
     try {
-      const response = await axios.post<{ message: string; token: string }>(
-        "http://localhost:5000/api/auth/signup",
-        { email, password }
+      // Register the user
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/register",
+        {
+          email,
+          password,
+        }
       );
-      setMessage(response.data.message);
-      setToken(response.data.token);
-      setUser({ email });
-      navigate("/verify"); // Redirect to Verify page after signup
-    } catch (error) {
-      const axiosError = error as AxiosError<{ message: string }>;
-      setMessage(axiosError.response?.data?.message || "Error signing up");
+      console.log(response);
+      // Automatically log in after registration
+      await login(email, password);
+      toast.success("Signed up successfully!");
+      navigate("/");
+    } catch (err: unknown) {
+      let errorMessage = "Failed to sign up. Please try again.";
+      if (axios.isAxiosError(err)) {
+        if (err.code === "ERR_NETWORK") {
+          errorMessage =
+            "Cannot connect to the server. Please ensure the backend is running.";
+        } else if (err.response) {
+          errorMessage = err.response.data.message || errorMessage;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6">Sign Up</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-        >
-          Sign Up
-        </button>
-      </form>
-      {message && <p className="mt-4 text-center">{message}</p>}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-50 to-gray-100 p-6">
+      <div className="bg-white shadow-xl rounded-2xl p-8 max-w-md w-full text-center border border-gray-200">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Sign Up</h2>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <label htmlFor="email" className="block text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Your email"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Your password"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`p-3 rounded-lg text-white font-semibold ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {loading ? "Signing up..." : "Sign Up"}
+          </button>
+        </form>
+        {error && (
+          <div className="mt-4 text-red-500">
+            <p>{error}</p>
+          </div>
+        )}
+        <p className="mt-4 text-gray-600">
+          Already have an account?{" "}
+          <Link to="/login" className="text-blue-600 hover:underline">
+            Login
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };

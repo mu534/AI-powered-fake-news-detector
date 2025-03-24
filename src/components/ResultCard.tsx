@@ -5,7 +5,8 @@ const ResultCard: React.FC<{
   confidence: number;
   source: string;
   image: string;
-}> = ({ label, confidence, source, image }) => {
+  url?: string;
+}> = ({ label, confidence, source, image, url }) => {
   return (
     <div className="bg-white shadow-lg rounded-xl overflow-hidden">
       <img src={image} alt={label} className="w-full h-40 object-cover" />
@@ -15,15 +16,20 @@ const ResultCard: React.FC<{
           Confidence Score: {(confidence * 100).toFixed(0)}%
         </p>
         <p className="text-sm text-gray-500">Source: {source}</p>
-        <a
-          href="#"
-          className="block mt-3 text-blue-600 font-semibold hover:underline"
-        >
-          View Details
-        </a>
+        {url ? (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block mt-3 text-blue-600 font-semibold hover:underline"
+          >
+            View Details
+          </a>
+        ) : (
+          <span className="block mt-3 text-gray-500">Details Unavailable</span>
+        )}
       </div>
     </div>
   );
 };
-
 export default ResultCard;

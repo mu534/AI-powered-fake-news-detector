@@ -1,30 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
-const NewsInput: React.FC<{ redirectTo?: string }> = ({ redirectTo }) => {
-  const [text, setText] = useState("");
+interface NewsInputProps {
+  redirectTo: string;
+}
+
+const NewsInput: React.FC<NewsInputProps> = ({ redirectTo }) => {
+  const [text, setText] = useState<string>("");
   const navigate = useNavigate();
 
-  const handleSubmit = () => {
-    if (redirectTo) navigate(`${redirectTo}?text=${encodeURIComponent(text)}`);
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (text.trim()) {
+      navigate(`${redirectTo}?text=${encodeURIComponent(text)}`);
+    }
   };
 
   return (
-    <div>
-      <input
-        type="text"
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <textarea
         value={text}
-        onChange={(e) => setText(e.target.value)}
-        className="w-full p-2 border rounded mb-4"
-        placeholder="input"
+        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+          setText(e.target.value)
+        }
+        placeholder="Paste the news article or claim here..."
+        className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-32 resize-none"
       />
       <button
-        onClick={handleSubmit}
-        className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+        type="submit"
+        className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
       >
-        Check News Now
+        Verify
       </button>
-    </div>
+    </form>
   );
 };
 

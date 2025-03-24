@@ -1,14 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { debounce } from "lodash"; // For debouncing
 
 const Footer: React.FC = () => {
   const [email, setEmail] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  // Debounced subscription handler
+  const handleSubscribe = useCallback(
+    debounce(async (email: string) => {
+      setIsLoading(true);
+      const previousEmail = email;
+      setEmail(""); // Optimistic update
+      try {
+        const response = await axios.post(
+          "http://localhost:5000/api/subscribe",
+          { email: previousEmail }
+        );
+        toast.success(response.data.message);
+      } catch (error: unknown) {
+        setEmail(previousEmail); // Revert on error
+        const errorMessage =
+          axios.isAxiosError(error) && error.response?.data?.message
+            ? error.response.data.message
+            : "Failed to subscribe. Please try again.";
+        toast.error(errorMessage);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 1000),
+    []
+  );
+
+  const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle subscription logic (e.g., API call)
-    console.log("Subscribed with email:", email);
-    setEmail("");
+    if (isLoading) return; // Prevent submission while loading
+    handleSubscribe(email);
   };
 
   return (
@@ -176,10 +205,7 @@ const Footer: React.FC = () => {
               Subscribe to our newsletter for the latest updates and tips on
               fighting misinformation.
             </p>
-            <form
-              onSubmit={handleSubscribe}
-              className="flex items-center space-x-2"
-            >
+            <form onSubmit={onSubmit} className="flex items-center space-x-2">
               <div className="relative flex-1">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                   <svg
@@ -201,15 +227,38 @@ const Footer: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Your email address"
-                  className="w-full pl-10 pr-4 py-2 rounded-l-full bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-4 py-2 rounded-l-full bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                   required
+                  disabled={isLoading}
                   aria-label="Email for newsletter subscription"
                 />
               </div>
               <button
                 type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded-r-full hover:bg-blue-600 transition-colors duration-300"
+                className="bg-blue-500 text-white px-4 py-2 rounded-r-full hover:bg-blue-600 transition-colors duration-300 disabled:opacity-50 flex items-center"
+                disabled={isLoading}
               >
+                {isLoading ? (
+                  <svg
+                    className="animate-spin h-5 w-5 mr-2 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                ) : null}
                 Subscribe
               </button>
             </form>
