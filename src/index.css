@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+@tailwind utilities;
+
+img.image-no-icon[alt]:not([src]),
+img.image-no-icon[alt][src=""] {
+  visibility: hidden;
+}
+
+img.image-no-icon[alt]:not([src]):before,
+img.image-no-icon[alt][src=""]:before {
+  content: none;
+}

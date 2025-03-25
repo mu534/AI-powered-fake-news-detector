@@ -11,6 +11,7 @@ interface User {
 // Define the AuthContext type
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
@@ -29,29 +30,28 @@ export const useAuth = () => {
 };
 
 // AuthProvider component
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Check for existing user on mount (e.g., from localStorage token)
+  // Check for existing token on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (token) {
-          const response = await axios.get(
-            "http://localhost:5000/api/auth/me",
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
+        const storedToken = localStorage.getItem("token");
+        if (storedToken) {
+          const response = await axios.get("http://localhost:5000/api/auth/me", {
+            headers: { Authorization: `Bearer ${storedToken}` },
+          });
           setUser(response.data.user);
+          setToken(storedToken);
         }
       } catch (error) {
         console.error("Auth check failed:", error);
         localStorage.removeItem("token"); // Clear invalid token
+        setToken(null);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -62,14 +62,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Login function
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        {
-          email,
-          password,
-        }
-      );
+      const response = await axios.post("http://localhost:5000/api/auth/login", {
+        email,
+        password,
+      });
       localStorage.setItem("token", response.data.token);
+      setToken(response.data.token);
       setUser(response.data.user);
     } catch (error) {
       throw new Error(
@@ -83,11 +81,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Logout function
   const logout = () => {
     localStorage.removeItem("token");
+    setToken(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
