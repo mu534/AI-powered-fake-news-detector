@@ -35,7 +35,7 @@ const Results: React.FC = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const refreshToken = localStorage.getItem("refreshToken");
+      const refreshToken = localStorage.getItem("refreshToken") || "";
       if (!token) {
         navigate("/login");
         return;
@@ -54,9 +54,7 @@ const Results: React.FC = () => {
       if (response.status === 403) {
         const refreshResponse = await fetch(`${apiUrl}/api/auth/refresh`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ refreshToken }),
         });
 
@@ -87,13 +85,12 @@ const Results: React.FC = () => {
           navigate("/login");
           return;
         }
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || "Failed to fetch results from the server."
-        );
+        throw new Error("Failed to fetch results from the server.");
       }
 
       const data = await response.json();
+      console.log("API Response:", data);
+
       const factCheckResults: FactCheckResult[] = data.factCheckResults || [];
       const newsResults: FactCheckResult[] = (data.newsResults || []).map(
         (news: NewsResult) => ({
@@ -103,39 +100,15 @@ const Results: React.FC = () => {
           publisher: news.source,
           rating: "Not Fact-Checked",
           url: news.url,
-          image: news.image,
+          image: news.image || "https://via.placeholder.com/500?text=No+Image",
         })
       );
 
       setResults([...factCheckResults, ...newsResults]);
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message === "Failed to fetch") {
-        console.error("Failed to fetch details:", {
-          url: `${
-            import.meta.env.VITE_API_URL || "http://localhost:5000"
-          }/api/fact-check`,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: { query, includeNews: true },
-          error: err,
-        });
-        setError(
-          "Unable to connect to the server. Please ensure the backend server is running on port 3000, check your internet connection, or try again later."
-        );
-      } else {
-        if (err instanceof Error) {
-          setError(
-            err.message ||
-              "An error occurred while fetching results. Please try again."
-          );
-        } else {
-          setError(
-            "An error occurred while fetching results. Please try again."
-          );
-        }
-      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred."
+      );
       console.error("Fetch error:", err);
     } finally {
       setLoading(false);
@@ -143,23 +116,19 @@ const Results: React.FC = () => {
   };
 
   useEffect(() => {
-    if (query) {
-      fetchResults();
-    } else {
+    if (!query) {
       setLoading(false);
       setError("No query provided. Please verify a claim first.");
+      return;
     }
-  }, [query, navigate]);
-  const handleNewSearch = () => {
-    navigate("/verify");
-  };
+    fetchResults();
+  }, [query]);
 
   return (
     <div className="max-w-6xl mx-auto p-6 mb-20 mt-20">
       <h2 className="text-3xl font-bold text-center mb-6">
         News Verification Results
       </h2>
-
       {loading ? (
         <div className="flex flex-col items-center justify-center">
           <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
@@ -171,49 +140,17 @@ const Results: React.FC = () => {
         <div className="text-center text-lg text-red-500">
           <p>{error}</p>
           <button
-            onClick={() => fetchResults()}
+            onClick={fetchResults}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Retry
           </button>
-          <p className="mt-2">
-            Try searching on{" "}
-            <a
-              href="https://www.snopes.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Snopes
-            </a>{" "}
-            or{" "}
-            <a
-              href="https://www.factcheck.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              FactCheck.org
-            </a>{" "}
-            or{" "}
-            <a
-              href={`https://news.google.com/search?q=${encodeURIComponent(
-                query
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Google News
-            </a>
-            .
-          </p>
         </div>
       ) : (
         <div>
           {results.length > 0 && (
             <button
-              onClick={handleNewSearch}
+              onClick={() => navigate("/verify")}
               className="mb-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               New Search
@@ -221,52 +158,25 @@ const Results: React.FC = () => {
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {results.length > 0 ? (
-              results.map((result, index) => (
-                <div key={index} className="relative">
-                  {result.rating === "Not Fact-Checked" && (
-                    <span className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                      News Article
-                    </span>
-                  )}
-                  <ResultCard {...result} />
-                </div>
-              ))
+              results.map((result, index) => {
+                const imageUrl =
+                  result.image ||
+                  "https://via.placeholder.com/500?text=No+Image";
+                console.log(`Image for ${result.claim}:`, imageUrl);
+                return (
+                  <div key={index} className="relative">
+                    {result.rating === "Not Fact-Checked" && (
+                      <span className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded">
+                        News Article
+                      </span>
+                    )}
+                    <ResultCard {...result} image={imageUrl} />
+                  </div>
+                );
+              })
             ) : (
               <div className="text-center text-lg text-gray-600">
                 <p>No fact-check or news results found for "{query}".</p>
-                <p className="mt-2">
-                  This might be a recent claim that hasn’t been fact-checked
-                  yet. Try searching on{" "}
-                  <a
-                    href="https://www.snopes.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    Snopes
-                  </a>{" "}
-                  or{" "}
-                  <a
-                    href="https://www.factcheck.org"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    FactCheck.org
-                  </a>{" "}
-                  or{" "}
-                  <a
-                    href={`https://news.google.com/search?q=${encodeURIComponent(
-                      query
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    Google News
-                  </a>
-                  .
-                </p>
               </div>
             )}
           </div>

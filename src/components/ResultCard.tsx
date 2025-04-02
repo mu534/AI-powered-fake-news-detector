@@ -9,53 +9,36 @@ const ResultCard: React.FC<{
   url: string;
   image: string | null;
 }> = ({ claim, claimant, date, publisher, rating, url, image }) => {
-  const placeholderImage = "https://via.placeholder.com/300x200";
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
+  const placeholderImage = "https://via.placeholder.com/300x200?text=No+Image";
+  const [imageSrc, setImageSrc] = useState(image || placeholderImage);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
-  // Use the provided image initially, switch to placeholder on error
-  const [currentImage, setCurrentImage] = useState(image || placeholderImage);
-
-  console.log(`Attempting to load image for ${publisher}: ${currentImage}`);
+  console.log(`Checking image for ${publisher}: ${image}`);
 
   return (
     <div className="bg-white shadow-lg rounded-xl overflow-hidden">
-      {imageLoading && (
+      {!imageLoaded && (
         <div className="w-full h-40 flex items-center justify-center bg-gray-200">
           <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
         </div>
       )}
       <img
-        src={currentImage}
+        src={imageSrc}
         alt={claim}
         className={`w-full h-40 object-cover ${
-          imageLoading ? "hidden" : "block"
-        } image-no-icon`}
+          imageLoaded ? "block" : "hidden"
+        }`}
         onLoad={() => {
           console.log(
-            `Image loaded successfully for ${publisher}: ${currentImage}`
+            `Image loaded successfully for ${publisher}: ${imageSrc}`
           );
-          setImageLoading(false);
+          setImageLoaded(true);
         }}
         onError={() => {
-          console.error(
-            `Failed to load image for ${publisher}: ${currentImage}`
-          );
-          if (currentImage !== placeholderImage) {
-            // Switch to placeholder if the current image fails
-            setCurrentImage(placeholderImage);
-          } else {
-            // If the placeholder also fails, stop loading
-            setImageLoading(false);
-            setImageError(true);
-          }
+          console.error(`Image failed for ${publisher}: ${imageSrc}`);
+          setImageSrc(placeholderImage);
         }}
       />
-      {imageError && (
-        <div className="w-full h-40 flex items-center justify-center bg-gray-200 text-gray-500">
-          <span>Image Unavailable</span>
-        </div>
-      )}
       <div className="p-4">
         <h3 className="text-lg font-bold mb-1">{claim}</h3>
         <p className="text-sm text-gray-600 mb-1">

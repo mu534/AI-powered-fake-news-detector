@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom"; // Add useNavigate
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { verifyNews } from "../services/api";
 import { toast } from "react-hot-toast";
@@ -8,16 +8,17 @@ const Verify: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [inputClaim, setInputClaim] = useState<string>("");
+
   const { token } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
   const urlClaim = new URLSearchParams(location.search).get("claim") || "";
   const [currentClaim, setCurrentClaim] = useState<string>(urlClaim);
 
   const fetchResults = async (claimToVerify: string) => {
-    if (!claimToVerify) {
-      setError("No claim provided for verification.");
-      setLoading(false);
+    if (!claimToVerify.trim()) {
+      setError("Please enter a valid claim to verify.");
       return;
     }
 
@@ -26,11 +27,10 @@ const Verify: React.FC = () => {
 
     try {
       const response = await verifyNews(claimToVerify, token);
-      // Redirect to Results page with results in state
       navigate(`/results?text=${encodeURIComponent(claimToVerify)}`, {
         state: { results: response },
       });
-    } catch (err: unknown) {
+    } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An unexpected error occurred.";
       setError(errorMessage);
@@ -42,16 +42,11 @@ const Verify: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputClaim) {
-      setError("Please enter a claim to verify.");
-      return;
-    }
-    setCurrentClaim(inputClaim);
     fetchResults(inputClaim);
   };
 
   useEffect(() => {
-    if (urlClaim) {
+    if (urlClaim && token) {
       setCurrentClaim(urlClaim);
       fetchResults(urlClaim);
     }
@@ -77,9 +72,9 @@ const Verify: React.FC = () => {
             />
             <button
               type="submit"
-              disabled={loading}
-              className={`p-3 rounded-lg text-white font-semibold ${
-                loading
+              disabled={loading || !inputClaim.trim()}
+              className={`p-3 rounded-lg text-white font-semibold transition ${
+                loading || !inputClaim.trim()
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-blue-600 hover:bg-blue-700"
               }`}
@@ -90,14 +85,16 @@ const Verify: React.FC = () => {
         </form>
       )}
 
-      {loading ? (
+      {loading && (
         <div className="flex flex-col items-center justify-center">
           <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
           <p className="text-lg text-gray-600">
             Analyzing claim: "{currentClaim}"... Please wait.
           </p>
         </div>
-      ) : error ? (
+      )}
+
+      {error && (
         <div className="text-center text-lg text-red-500 mb-4">
           <p>{error}</p>
           {error.toLowerCase().includes("server") && (
@@ -132,7 +129,7 @@ const Verify: React.FC = () => {
             </>
           )}
         </div>
-      ) : null}
+      )}
     </div>
   );
 };
