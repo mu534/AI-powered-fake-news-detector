@@ -41,7 +41,7 @@ const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="bg-blue-900 text-white py-12">
+    <footer className="bg-gradient-to-br from-slate-800 to-slate-700 text-white overflow-hidden group transition-all duration-500 hover:bg-slate-700 py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
