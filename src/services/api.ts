@@ -13,7 +13,8 @@ export interface FactCheckResult {
 
 export const createAxiosInstance = (token: string | null) => {
   const instance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
+    baseURL: import.meta.env.VITE_API_URL?.trim() || "http://localhost:5000",
+
     timeout: 10000,
     headers: {
       "Content-Type": "application/json",
