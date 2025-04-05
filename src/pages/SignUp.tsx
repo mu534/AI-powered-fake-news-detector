@@ -27,9 +27,9 @@ const Signup: React.FC = () => {
     }
 
     try {
-      const API_URL =
-        import.meta.env.VITE_API_URL || "http://localhost:5000/api/auth/signup";
-      const response = await fetch(API_URL, {
+      const API_URL = import.meta.env.VITE_API_URL;
+
+      const response = await fetch(`${API_URL}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
