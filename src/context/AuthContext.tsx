@@ -8,6 +8,31 @@ interface User {
   role: string; // e.g., "user" or "admin"
 }
 
+// Define FactCheck types (from your Results.tsx)
+interface FactCheckResult {
+  claim: string;
+  claimant: string;
+  date: string;
+  publisher: string;
+  rating: string;
+  url: string;
+  image: string | null;
+}
+
+interface NewsResult {
+  title: string;
+  description: string;
+  url: string;
+  image: string | null;
+  publishedAt: string;
+  source: string;
+}
+
+interface FactCheckResponse {
+  factCheckResults: FactCheckResult[];
+  newsResults: NewsResult[];
+}
+
 // Define the AuthContext type
 interface AuthContextType {
   user: User | null;
@@ -17,7 +42,10 @@ interface AuthContextType {
   loading: boolean;
   setToken: (token: string | null) => void;
   setUser: (user: User | null) => void;
-  factCheck: (content: string) => Promise<unknown>;
+  factCheck: (
+    content: string,
+    includeNews?: boolean
+  ) => Promise<FactCheckResponse>;
 }
 
 // Create the AuthContext
@@ -33,7 +61,7 @@ export const useAuth = () => {
 };
 
 // Get API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const FACT_CHECK_URL = `${API_URL}/fact-check`;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -88,12 +116,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Fact-check function
-  const factCheck = async (content: string) => {
+  // Fact-check function with optional includeNews
+  const factCheck = async (
+    content: string,
+    includeNews: boolean = false
+  ): Promise<FactCheckResponse> => {
+    if (!token) {
+      throw new Error("Authentication required. Please log in.");
+    }
+
     try {
       const response = await axios.post(
         FACT_CHECK_URL,
-        { content },
+        { content, includeNews },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -101,13 +136,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           },
         }
       );
-      return response.data;
+      return response.data as FactCheckResponse;
     } catch (error) {
-      throw new Error(
-        axios.isAxiosError(error) && error.response?.data?.message
-          ? error.response.data.message
-          : "Fact-check failed. Please try again."
-      );
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const message = error.response?.data?.message || "Fact-check failed";
+        if (status === 401) {
+          logout(); // Clear token on unauthorized
+          throw new Error("Session expired. Please log in again.");
+        }
+        if (status === 404) {
+          throw new Error("No fact-check results found for this content.");
+        }
+        throw new Error(`Request failed with status ${status}: ${message}`);
+      }
+      throw new Error("Fact-check failed. Please try again.");
     }
   };
 

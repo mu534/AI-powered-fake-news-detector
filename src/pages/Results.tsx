@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext"; // Adjust path as needed
 import ResultCard from "../components/ResultCard";
 
 interface FactCheckResult {
@@ -24,90 +25,49 @@ interface NewsResult {
 const Results: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { factCheck, token } = useAuth();
   const [results, setResults] = useState<FactCheckResult[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const query = new URLSearchParams(location.search).get("text") || "";
 
   const fetchResults = async () => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const token = localStorage.getItem("token");
-      const refreshToken = localStorage.getItem("refreshToken") || "";
-      if (!token) {
-        navigate("/login");
-        return;
-      }
-
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      let response = await fetch(`${apiUrl}/api/fact-check`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ query, includeNews: true }),
-      });
-
-      if (response.status === 403) {
-        const refreshResponse = await fetch(`${apiUrl}/api/auth/refresh`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ refreshToken }),
-        });
-
-        if (!refreshResponse.ok) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("refreshToken");
-          navigate("/login");
-          return;
-        }
-
-        const { accessToken } = await refreshResponse.json();
-        localStorage.setItem("token", accessToken);
-
-        response = await fetch(`${apiUrl}/api/fact-check`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ query, includeNews: true }),
-        });
-      }
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("refreshToken");
-          navigate("/login");
-          return;
-        }
-        throw new Error("Failed to fetch results from the server.");
-      }
-
-      const data = await response.json();
-      console.log("API Response:", data);
-
-      const factCheckResults: FactCheckResult[] = data.factCheckResults || [];
-      const newsResults: FactCheckResult[] = (data.newsResults || []).map(
-        (news: NewsResult) => ({
-          claim: news.title,
-          claimant: "N/A (News Article)",
-          date: new Date(news.publishedAt).toLocaleDateString(),
-          publisher: news.source,
-          rating: "Not Fact-Checked",
-          url: news.url,
-          image: news.image || "https://via.placeholder.com/500?text=No+Image",
-        })
-      );
+      const response = await factCheck(query); // Use AuthContext's factCheck
+      const typedResponse = response as {
+        factCheckResults?: FactCheckResult[];
+        newsResults?: NewsResult[];
+      };
+      const factCheckResults: FactCheckResult[] =
+        typedResponse.factCheckResults || [];
+      const newsResults: FactCheckResult[] = (
+        typedResponse.newsResults || []
+      ).map((news: NewsResult) => ({
+        claim: news.title,
+        claimant: "N/A (News Article)",
+        date: new Date(news.publishedAt).toLocaleDateString(),
+        publisher: news.source,
+        rating: "Not Fact-Checked",
+        url: news.url,
+        image: news.image || "https://via.placeholder.com/500?text=No+Image",
+      }));
 
       setResults([...factCheckResults, ...newsResults]);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "An unknown error occurred."
+        err instanceof Error
+          ? err.message === "Request failed with status 404"
+            ? "No fact-check results found for this claim."
+            : err.message
+          : "An unexpected error occurred."
       );
       console.error("Fetch error:", err);
     } finally {
@@ -121,8 +81,26 @@ const Results: React.FC = () => {
       setError("No query provided. Please verify a claim first.");
       return;
     }
-    fetchResults();
-  }, [query]);
+    // Check if results are passed via state from Verify page
+    if (location.state?.results) {
+      const { factCheckResults, newsResults } = location.state.results;
+      const formattedNewsResults: FactCheckResult[] = (newsResults || []).map(
+        (news: NewsResult) => ({
+          claim: news.title,
+          claimant: "N/A (News Article)",
+          date: new Date(news.publishedAt).toLocaleDateString(),
+          publisher: news.source,
+          rating: "Not Fact-Checked",
+          url: news.url,
+          image: news.image || "https://via.placeholder.com/500?text=No+Image",
+        })
+      );
+      setResults([...(factCheckResults || []), ...formattedNewsResults]);
+      setLoading(false);
+    } else {
+      fetchResults();
+    }
+  }, [query, token, location.state]);
 
   return (
     <div className="max-w-6xl mx-auto p-6 mb-20 mt-20">

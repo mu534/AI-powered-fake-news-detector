@@ -7,14 +7,14 @@ const Verify: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [inputClaim, setInputClaim] = useState<string>("");
-  const { factCheck, token } = useAuth(); // Updated to use factCheck from context
+  const { factCheck, token } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const urlClaim = new URLSearchParams(location.search).get("claim") || "";
   const [currentClaim, setCurrentClaim] = useState<string>(urlClaim);
 
   const fetchResults = async (claimToVerify: string) => {
-    if (!claimToVerify) {
+    if (!claimToVerify.trim()) {
       setError("No claim provided for verification.");
       setLoading(false);
       return;
@@ -24,16 +24,23 @@ const Verify: React.FC = () => {
     setError(null);
 
     try {
-      const response = await factCheck(claimToVerify); // Use factCheck instead of verifyNews
-      // Redirect to Results page with results in state
+      const response = await factCheck(claimToVerify.trim());
+      if (!response || (!response.factCheckResults && !response.newsResults)) {
+        throw new Error("No results returned from fact-check service.");
+      }
       navigate(`/results?text=${encodeURIComponent(claimToVerify)}`, {
         state: { results: response },
       });
     } catch (err: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : "An unexpected error occurred.";
+        err instanceof Error
+          ? err.message === "Request failed with status 404"
+            ? "No fact-check results found for this claim."
+            : err.message
+          : "An unexpected error occurred.";
       setError(errorMessage);
       toast.error(errorMessage);
+      console.error("Fact-check error:", err); // Log for debugging
     } finally {
       setLoading(false);
     }
@@ -41,7 +48,7 @@ const Verify: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputClaim) {
+    if (!inputClaim.trim()) {
       setError("Please enter a claim to verify.");
       return;
     }
@@ -99,7 +106,8 @@ const Verify: React.FC = () => {
       ) : error ? (
         <div className="text-center text-lg text-red-500 mb-4">
           <p>{error}</p>
-          {error.toLowerCase().includes("server") && (
+          {error.toLowerCase().includes("server") ||
+          error.toLowerCase().includes("404") ? (
             <>
               <button
                 onClick={() => fetchResults(currentClaim)}
@@ -129,7 +137,7 @@ const Verify: React.FC = () => {
                 .
               </p>
             </>
-          )}
+          ) : null}
         </div>
       ) : null}
     </div>
