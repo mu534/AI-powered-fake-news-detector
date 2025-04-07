@@ -15,14 +15,14 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
-  setToken: (token: string | null) => void; // Add setToken
-  setUser: (user: User | null) => void; // Add setUser
+  setToken: (token: string | null) => void;
+  setUser: (user: User | null) => void;
 }
 
-// Create the AuthContext with a default value
+// Create the AuthContext
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Custom hook to use the AuthContext
+// Hook to use the AuthContext
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -31,7 +31,9 @@ export const useAuth = () => {
   return context;
 };
 
-// AuthProvider component
+// Get API URL from environment variable
+const API_URL = import.meta.env.VITE_API_URL;
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -45,18 +47,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const storedToken = localStorage.getItem("token");
         if (storedToken) {
-          const response = await axios.get(
-            "http://localhost:5000/api/auth/me",
-            {
-              headers: { Authorization: `Bearer ${storedToken}` },
-            }
-          );
+          const response = await axios.get(`${API_URL}/me`, {
+            headers: { Authorization: `Bearer ${storedToken}` },
+          });
           setUser(response.data.user);
           setToken(storedToken);
         }
       } catch (error) {
         console.error("Auth check failed:", error);
-        localStorage.removeItem("token"); // Clear invalid token
+        localStorage.removeItem("token");
         setToken(null);
         setUser(null);
       } finally {
@@ -69,16 +68,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Login function
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        {
-          email,
-          password,
-        }
-      );
-      localStorage.setItem("token", response.data.token);
-      setToken(response.data.token);
-      setUser(response.data.user);
+      const response = await axios.post(`${API_URL}/login`, {
+        email,
+        password,
+      });
+
+      const { token, user } = response.data;
+      localStorage.setItem("token", token);
+      setToken(token);
+      setUser(user);
     } catch (error) {
       throw new Error(
         axios.isAxiosError(error) && error.response?.data?.message
