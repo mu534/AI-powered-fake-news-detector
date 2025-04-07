@@ -31,8 +31,10 @@ export const useAuth = () => {
   return context;
 };
 
-// Get API URL from environment variable
+// Get API URL from environment variables
 const API_URL = import.meta.env.VITE_API_URL;
+// You could also add the fact-check URL if you plan to use it later
+// const FACT_CHECK_URL = import.meta.env.VITE_FACT_CHECK_URL;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
