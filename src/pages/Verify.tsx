@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // Adjust path as needed
+import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
 
 const Verify: React.FC = () => {
@@ -34,13 +34,18 @@ const Verify: React.FC = () => {
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error
-          ? err.message === "Request failed with status 404"
+          ? err.message === "auth_required"
+            ? "Authentication required. Redirecting to login..."
+            : err.message === "Request failed with status 404"
             ? "No fact-check results found for this claim."
             : err.message
           : "An unexpected error occurred.";
       setError(errorMessage);
       toast.error(errorMessage);
-      console.error("Fact-check error:", err); // Log for debugging
+      if (err instanceof Error && err.message === "auth_required") {
+        setTimeout(() => navigate("/login"), 2000); // Redirect after showing toast
+      }
+      console.error("Fact-check error:", err);
     } finally {
       setLoading(false);
     }

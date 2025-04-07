@@ -33,7 +33,8 @@ const Results: React.FC = () => {
 
   const fetchResults = async () => {
     if (!token) {
-      navigate("/login");
+      setError("Authentication required. Redirecting to login...");
+      setTimeout(() => navigate("/login"), 2000);
       return;
     }
 
@@ -41,34 +42,35 @@ const Results: React.FC = () => {
     setError(null);
 
     try {
-      const response = await factCheck(query); // Use AuthContext's factCheck
-      const typedResponse = response as {
-        factCheckResults?: FactCheckResult[];
-        newsResults?: NewsResult[];
-      };
+      const response = await factCheck(query, true);
       const factCheckResults: FactCheckResult[] =
-        typedResponse.factCheckResults || [];
-      const newsResults: FactCheckResult[] = (
-        typedResponse.newsResults || []
-      ).map((news: NewsResult) => ({
-        claim: news.title,
-        claimant: "N/A (News Article)",
-        date: new Date(news.publishedAt).toLocaleDateString(),
-        publisher: news.source,
-        rating: "Not Fact-Checked",
-        url: news.url,
-        image: news.image || "https://via.placeholder.com/500?text=No+Image",
-      }));
+        response.factCheckResults || [];
+      const newsResults: FactCheckResult[] = (response.newsResults || []).map(
+        (news: NewsResult) => ({
+          claim: news.title,
+          claimant: "N/A (News Article)",
+          date: new Date(news.publishedAt).toLocaleDateString(),
+          publisher: news.source,
+          rating: "Not Fact-Checked",
+          url: news.url,
+          image: news.image || "https://via.placeholder.com/500?text=No+Image",
+        })
+      );
 
       setResults([...factCheckResults, ...newsResults]);
     } catch (err) {
-      setError(
+      const errorMessage =
         err instanceof Error
-          ? err.message === "Request failed with status 404"
+          ? err.message === "auth_required"
+            ? "Authentication required. Redirecting to login..."
+            : err.message === "Request failed with status 404"
             ? "No fact-check results found for this claim."
             : err.message
-          : "An unexpected error occurred."
-      );
+          : "An unexpected error occurred.";
+      setError(errorMessage);
+      if (err instanceof Error && err.message === "auth_required") {
+        setTimeout(() => navigate("/login"), 2000);
+      }
       console.error("Fetch error:", err);
     } finally {
       setLoading(false);
