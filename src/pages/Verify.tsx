@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom"; // Add useNavigate
-import { useAuth } from "../context/AuthContext";
-import { verifyNews } from "../services/api";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext"; // Adjust path as needed
 import { toast } from "react-hot-toast";
 
 const Verify: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [inputClaim, setInputClaim] = useState<string>("");
-  const { token } = useAuth();
+  const { factCheck, token } = useAuth(); // Updated to use factCheck from context
   const location = useLocation();
   const navigate = useNavigate();
   const urlClaim = new URLSearchParams(location.search).get("claim") || "";
@@ -25,7 +24,7 @@ const Verify: React.FC = () => {
     setError(null);
 
     try {
-      const response = await verifyNews(claimToVerify, token);
+      const response = await factCheck(claimToVerify); // Use factCheck instead of verifyNews
       // Redirect to Results page with results in state
       navigate(`/results?text=${encodeURIComponent(claimToVerify)}`, {
         state: { results: response },

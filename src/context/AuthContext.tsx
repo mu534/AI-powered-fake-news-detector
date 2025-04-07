@@ -17,6 +17,7 @@ interface AuthContextType {
   loading: boolean;
   setToken: (token: string | null) => void;
   setUser: (user: User | null) => void;
+  factCheck: (content: string) => Promise<unknown>;
 }
 
 // Create the AuthContext
@@ -33,8 +34,7 @@ export const useAuth = () => {
 
 // Get API URL from environment variables
 const API_URL = import.meta.env.VITE_API_URL;
-// You could also add the fact-check URL if you plan to use it later
-// const FACT_CHECK_URL = import.meta.env.VITE_FACT_CHECK_URL;
+const FACT_CHECK_URL = `${API_URL}/fact-check`;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -88,6 +88,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Fact-check function
+  const factCheck = async (content: string) => {
+    try {
+      const response = await axios.post(
+        FACT_CHECK_URL,
+        { content },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        axios.isAxiosError(error) && error.response?.data?.message
+          ? error.response.data.message
+          : "Fact-check failed. Please try again."
+      );
+    }
+  };
+
   // Logout function
   const logout = () => {
     localStorage.removeItem("token");
@@ -97,7 +120,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ user, token, login, logout, loading, setToken, setUser }}
+      value={{
+        user,
+        token,
+        login,
+        logout,
+        loading,
+        setToken,
+        setUser,
+        factCheck,
+      }}
     >
       {children}
     </AuthContext.Provider>
