@@ -7,7 +7,7 @@ const Verify: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [inputClaim, setInputClaim] = useState<string>("");
-  const { factCheck, token } = useAuth();
+  const { factCheck } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const urlClaim = new URLSearchParams(location.search).get("claim") || "";
@@ -17,13 +17,6 @@ const Verify: React.FC = () => {
     if (!claimToVerify.trim()) {
       setError("No claim provided for verification.");
       setLoading(false);
-      return;
-    }
-
-    if (!token) {
-      setError("Authentication required. Please log in to verify a claim.");
-      toast.error("Authentication required. Please log in to verify a claim.");
-      navigate("/login", { replace: true });
       return;
     }
 
@@ -63,11 +56,11 @@ const Verify: React.FC = () => {
   };
 
   useEffect(() => {
-    if (urlClaim && token) {
+    if (urlClaim) {
       setCurrentClaim(urlClaim);
       fetchResults(urlClaim);
     }
-  }, [urlClaim, token]);
+  }, [urlClaim]);
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -98,19 +91,6 @@ const Verify: React.FC = () => {
             >
               {loading ? "Verifying..." : "Verify"}
             </button>
-            {!token && (
-              <p className="text-sm text-gray-600">
-                You must be logged in to verify a claim.{" "}
-                <button
-                  type="button"
-                  onClick={() => navigate("/login")}
-                  className="text-blue-600 hover:underline"
-                >
-                  Log in here
-                </button>
-                .
-              </p>
-            )}
           </div>
         </form>
       )}

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // Adjust path as needed
+import { useAuth } from "../context/AuthContext";
 import ResultCard from "../components/ResultCard";
+import { toast } from "react-hot-toast";
 
 interface FactCheckResult {
   claim: string;
@@ -25,19 +26,13 @@ interface NewsResult {
 const Results: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { factCheck, token } = useAuth();
+  const { factCheck } = useAuth();
   const [results, setResults] = useState<FactCheckResult[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const query = new URLSearchParams(location.search).get("text") || "";
 
   const fetchResults = async () => {
-    if (!token) {
-      setError("Authentication required. Redirecting to login...");
-      setTimeout(() => navigate("/login"), 2000);
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -61,17 +56,12 @@ const Results: React.FC = () => {
     } catch (err) {
       const errorMessage =
         err instanceof Error
-          ? err.message === "auth_required"
-            ? "Authentication required. Redirecting to login..."
-            : err.message === "Request failed with status 404"
+          ? err.message === "Request failed with status 404"
             ? "No fact-check results found for this claim."
             : err.message
           : "An unexpected error occurred.";
       setError(errorMessage);
-      if (err instanceof Error && err.message === "auth_required") {
-        setTimeout(() => navigate("/login"), 2000);
-      }
-      console.error("Fetch error:", err);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -83,7 +73,6 @@ const Results: React.FC = () => {
       setError("No query provided. Please verify a claim first.");
       return;
     }
-    // Check if results are passed via state from Verify page
     if (location.state?.results) {
       const { factCheckResults, newsResults } = location.state.results;
       const formattedNewsResults: FactCheckResult[] = (newsResults || []).map(
@@ -102,7 +91,7 @@ const Results: React.FC = () => {
     } else {
       fetchResults();
     }
-  }, [query, token, location.state]);
+  }, [query, location.state]);
 
   return (
     <div className="max-w-6xl mx-auto p-6 mb-20 mt-20">

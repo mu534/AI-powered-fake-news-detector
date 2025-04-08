@@ -8,7 +8,7 @@ interface User {
   role: string; // e.g., "user" or "admin"
 }
 
-// Define FactCheck types (from your Results.tsx)
+// Define FactCheck types
 interface FactCheckResult {
   claim: string;
   claimant: string;
@@ -116,35 +116,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Fact-check function with optional includeNews
+  // Fact-check function (no token required)
   const factCheck = async (
     content: string,
     includeNews: boolean = false
   ): Promise<FactCheckResponse> => {
-    if (!token) {
-      throw new Error("Authentication required. Please log in.");
-    }
-
     try {
+      const headers: { [key: string]: string } = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`; // Include token if present
+      }
       const response = await axios.post(
         FACT_CHECK_URL,
         { content, includeNews },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+        { headers }
       );
       return response.data as FactCheckResponse;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
         const message = error.response?.data?.message || "Fact-check failed";
-        if (status === 401) {
-          logout(); // Clear token on unauthorized
-          throw new Error("Session expired. Please log in again.");
-        }
         if (status === 404) {
           throw new Error("No fact-check results found for this content.");
         }
