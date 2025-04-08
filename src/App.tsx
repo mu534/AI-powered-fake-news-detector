@@ -13,7 +13,7 @@ import VerificationGuide from "./pages/VerificationGuide";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
-import Dashboard from "./pages/Dashboard"; // Add this import (create this page if it doesn’t exist)
+
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import { Toaster } from "react-hot-toast";
@@ -51,14 +51,7 @@ const App: React.FC = () => {
               <Route path="/contact" element={<Contact />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/login" element={<Login />} />
-              <Route
-                path="/dashboard" // Add this route
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
+
               <Route
                 path="/admin"
                 element={

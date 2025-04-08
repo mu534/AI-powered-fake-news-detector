@@ -37,13 +37,13 @@ const Home: React.FC = () => {
 
             {/* Right Column */}
             <div className="relative flex justify-center animate-fade-in-right">
-              <div className="w-80 h-80 md:w-96 md:h-96 bg-slate-800 rounded-xl shadow-2xl overflow-hidden transform rotate-3 group-hover:rotate-0 transition-transform duration-500">
+              <div className="w-full max-w-sm bg-slate-800 rounded-xl shadow-2xl overflow-hidden">
                 <img
                   src={cyber}
                   alt="Cybersecurity protection"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-auto object-contain"
                 />
-                <div className="absolute -bottom-4 -right-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+                <div className="absolute bottom-4 right-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
                   Powered by AI
                 </div>
               </div>
