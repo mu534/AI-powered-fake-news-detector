@@ -13,6 +13,15 @@ const Verify: React.FC = () => {
   const urlClaim = new URLSearchParams(location.search).get("claim") || "";
   const [currentClaim, setCurrentClaim] = useState<string>(urlClaim);
 
+  // Check token on mount and redirect if not authenticated
+  useEffect(() => {
+    if (!token && !urlClaim) {
+      setError("Authentication required. Redirecting to login...");
+      toast.error("Authentication required. Redirecting to login...");
+      setTimeout(() => navigate("/login"), 2000);
+    }
+  }, [token, navigate, urlClaim]);
+
   const fetchResults = async (claimToVerify: string) => {
     if (!claimToVerify.trim()) {
       setError("No claim provided for verification.");
@@ -43,9 +52,8 @@ const Verify: React.FC = () => {
       setError(errorMessage);
       toast.error(errorMessage);
       if (err instanceof Error && err.message === "auth_required") {
-        setTimeout(() => navigate("/login"), 2000); // Redirect after showing toast
+        navigate("/login"); // Immediate redirect
       }
-      console.error("Fact-check error:", err);
     } finally {
       setLoading(false);
     }
