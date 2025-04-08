@@ -13,19 +13,17 @@ const Verify: React.FC = () => {
   const urlClaim = new URLSearchParams(location.search).get("claim") || "";
   const [currentClaim, setCurrentClaim] = useState<string>(urlClaim);
 
-  // Check token on mount and redirect if not authenticated
-  useEffect(() => {
-    if (!token && !urlClaim) {
-      setError("Authentication required. Redirecting to login...");
-      toast.error("Authentication required. Redirecting to login...");
-      setTimeout(() => navigate("/login"), 2000);
-    }
-  }, [token, navigate, urlClaim]);
-
   const fetchResults = async (claimToVerify: string) => {
     if (!claimToVerify.trim()) {
       setError("No claim provided for verification.");
       setLoading(false);
+      return;
+    }
+
+    if (!token) {
+      setError("Authentication required. Please log in to verify a claim.");
+      toast.error("Authentication required. Please log in to verify a claim.");
+      navigate("/login", { replace: true });
       return;
     }
 
@@ -43,17 +41,12 @@ const Verify: React.FC = () => {
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error
-          ? err.message === "auth_required"
-            ? "Authentication required. Redirecting to login..."
-            : err.message === "Request failed with status 404"
+          ? err.message === "Request failed with status 404"
             ? "No fact-check results found for this claim."
             : err.message
           : "An unexpected error occurred.";
       setError(errorMessage);
       toast.error(errorMessage);
-      if (err instanceof Error && err.message === "auth_required") {
-        navigate("/login"); // Immediate redirect
-      }
     } finally {
       setLoading(false);
     }
@@ -70,7 +63,7 @@ const Verify: React.FC = () => {
   };
 
   useEffect(() => {
-    if (urlClaim) {
+    if (urlClaim && token) {
       setCurrentClaim(urlClaim);
       fetchResults(urlClaim);
     }
@@ -105,6 +98,19 @@ const Verify: React.FC = () => {
             >
               {loading ? "Verifying..." : "Verify"}
             </button>
+            {!token && (
+              <p className="text-sm text-gray-600">
+                You must be logged in to verify a claim.{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate("/login")}
+                  className="text-blue-600 hover:underline"
+                >
+                  Log in here
+                </button>
+                .
+              </p>
+            )}
           </div>
         </form>
       )}
