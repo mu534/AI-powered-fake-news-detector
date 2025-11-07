@@ -1,54 +1,45 @@
-# React + TypeScript + Vite
+---
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## **AI-Powered Fake News Detector**
 
-Currently, two official plugins are available:
+```markdown
+# AI-Powered Fake News Detector
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+An AI-based application to detect fake news from user-inputted text. Built with React, TypeScript, and integrated with the Gemini API, it provides an interactive interface for real-time news verification.
 
-## Expanding the ESLint configuration
+## Features
+- Detect whether a news snippet is real or fake
+- Interactive and responsive UI
+- Uses state-of-the-art AI (Gemini API) for classification
+- Lightweight and user-friendly frontend
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Technologies
+- Frontend: React, TypeScript, Tailwind CSS
+- AI: Gemini API for text classification
+- Vite for fast development
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+## Setup
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/mu534/AI-powered-fake-news-detector.git
+Install dependencies:
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+bash
+Copy code
+npm install
+Set your Gemini API key in .env file:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+bash
+Copy code
+VITE_GEMINI_API_KEY=your_api_key
+Start the development server:
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+bash
+Copy code
+npm run dev
+Usage
+Open http://localhost:5173
+
+Input a news snippet
+
+Get instant feedback if it’s real or fake
